@@ -2,28 +2,28 @@ package dto;
 
 public class ExchangeRatesDto {
     int id;
-    int baseCurrencyId;
-    int targetCurrencyId;
+    CurrencyDto baseCurrency;
+    CurrencyDto targetCurrency;
     double rate;
 
 
-    public ExchangeRatesDto(int id, int baseCurrencyId, int targetCurrencyId, double rate) {
+    public ExchangeRatesDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, double rate) {
         this.id = id;
-        this.baseCurrencyId = baseCurrencyId;
-        this.targetCurrencyId = targetCurrencyId;
+        this.baseCurrency = baseCurrency;
+        this.targetCurrency = targetCurrency;
         this.rate = rate;
     }
 
-    public int getBaseCurrencyId() {
-        return baseCurrencyId;
+    public CurrencyDto getBaseCurrencyId() {
+        return baseCurrency;
     }
 
     public int getId() {
         return id;
     }
 
-    public int getTargetCurrencyId() {
-        return targetCurrencyId;
+    public CurrencyDto getTargetCurrencyId() {
+        return targetCurrency;
     }
 
     public double getRate() {

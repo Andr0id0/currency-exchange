@@ -20,15 +20,13 @@ public class DatabaseInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("Инициализация базы данных...");
         createTables();
         insertSampleData();
     }
 
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("Очистка ресурсов...");
-    }
+//    @Override
+//    public void contextDestroyed(ServletContextEvent sce) {
+//    }
 
 
 //    public static void dropTables() {

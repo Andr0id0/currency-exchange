@@ -1,6 +1,6 @@
 package servlets;
 
-import dao.CurrencyDao;
+import dao.CurrencyService;
 import dto.CurrencyDto;
 import model.Currency;
 import convertors.CurrencyConvertor;
@@ -14,13 +14,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 
 @WebServlet("/currency/*")
 public class CurrencyServlet extends HttpServlet {
 
-    CurrencyDao currencyDao = new CurrencyDao();
+    CurrencyService currencyService = new CurrencyService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -34,20 +34,18 @@ public class CurrencyServlet extends HttpServlet {
         String code = pathInfo.substring(1).toUpperCase();
 
         try {
-            Optional<Currency> currency = currencyDao.getByCode(code);
+            Currency currency = currencyService.getByCode(code);
 
-            if (currency.isEmpty()) {
-                JsonUtil.sendErrorResponse(resp, "Currency not found", HttpStatusCode.NOT_FOUND.getValue());
-                return;
-            }
-
-            CurrencyDto dto = CurrencyConvertor.toDto(currency.get());
+            CurrencyDto dto = CurrencyConvertor.toDto(currency);
 
             JsonUtil.sendJsonResponse(resp, dto, HttpStatusCode.OK.getValue());
 
         } catch (SQLException e) {
-            JsonUtil.sendErrorResponse(resp, "Database error", HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
+            JsonUtil.sendErrorResponse(resp, "Internal server error: " + e.getMessage(), HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
+        } catch (NoSuchElementException e) {
+            JsonUtil.sendErrorResponse(resp, "Currency not found", HttpStatusCode.NOT_FOUND.getValue());
         }
+
 
     }
 }

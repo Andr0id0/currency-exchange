@@ -6,9 +6,10 @@ import util.DBUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
-public class CurrencyDao {
+public class CurrencyService {
 
 
     public List<Currency> getAllCurrencies() throws SQLException {
@@ -55,13 +56,13 @@ public class CurrencyDao {
         }
     }
 
-    public Optional<Currency> getByCode(String code) throws SQLException {
-        final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
+    public Optional<Currency> getById(int id) throws SQLException {
+        final String GET_BY_ID = "SELECT * FROM currencies WHERE id = ?";
 
         try (Connection connection = DBUtil.getConnection();
-            PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
+             PreparedStatement statement = connection.prepareStatement(GET_BY_ID)) {
 
-            statement.setString(1,code);
+            statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
@@ -74,6 +75,28 @@ public class CurrencyDao {
             }
         }
         return Optional.empty();
+    }
+
+    public Currency getByCode(String code) throws SQLException, NoSuchElementException {
+        final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
+
+        try (Connection connection = DBUtil.getConnection();
+            PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
+
+            statement.setString(1,code);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return (new Currency(
+                        resultSet.getInt("id"),
+                        resultSet.getString("code"),
+                        resultSet.getString("full_name"),
+                        resultSet.getString("sign")
+                ));
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
     }
 
     public boolean existCode(String code) throws SQLException {

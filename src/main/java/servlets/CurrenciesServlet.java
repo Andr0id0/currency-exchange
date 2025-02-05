@@ -1,6 +1,6 @@
 package servlets;
 
-import dao.CurrencyDao;
+import dao.CurrencyService;
 import dto.CurrencyDto;
 import model.Currency;
 import convertors.CurrencyConvertor;
@@ -20,12 +20,12 @@ import java.util.stream.Collectors;
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
 
-    private final CurrencyDao currencyDao = new CurrencyDao();
+    private final CurrencyService currencyService = new CurrencyService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            List<Currency> currencies = currencyDao.getAllCurrencies();
+            List<Currency> currencies = currencyService.getAllCurrencies();
 
             List<CurrencyDto> dtos = currencies.stream()
                     .map(CurrencyConvertor::toDto).collect(Collectors.toList());
@@ -53,14 +53,14 @@ public class CurrenciesServlet extends HttpServlet {
                 return;
             }
 
-            if (currencyDao.existCode(code) || currencyDao.existFullName(fullName) || currencyDao.existSign(sign)) {
+            if (currencyService.existCode(code) || currencyService.existFullName(fullName) || currencyService.existSign(sign)) {
                 JsonUtil.sendErrorResponse(resp, "Currency already exist", HttpStatusCode.CONFLICT.getValue());
                 return;
             }
 
             Currency newCurrency = new Currency(0, code, fullName, sign);
 
-            int id = currencyDao.addCurrency(code, fullName, sign);
+            int id = currencyService.addCurrency(code, fullName, sign);
             newCurrency.setId(id);
 
             CurrencyDto dto = CurrencyConvertor.toDto(newCurrency);
