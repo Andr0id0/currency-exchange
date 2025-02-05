@@ -1,5 +1,7 @@
 package servlets;
 
+import convertors.ExchangeRatesConvertor;
+import dao.CurrencyService;
 import dao.ExchangeRatesService;
 import dto.ExchangeRatesDto;
 import util.HttpStatusCode;
@@ -18,6 +20,7 @@ import java.util.NoSuchElementException;
 public class ExchangeRateServlet extends HttpServlet {
 
     ExchangeRatesService exchangeRatesService = new ExchangeRatesService();
+    CurrencyService currencyService = new CurrencyService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -40,7 +43,7 @@ public class ExchangeRateServlet extends HttpServlet {
         String target = pathInfo.substring(3, 6);
 
         try {
-            ExchangeRatesDto dto = exchangeRatesService.getExchangeRateDtoByBaseCurrencyAndTargetCurrency(base, target);
+            ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.getExchangeRateByBaseCodeAndTargetCode(base, target));
 
             JsonUtil.sendJsonResponse(resp, dto, HttpStatusCode.OK.getValue());
 
@@ -76,8 +79,9 @@ public class ExchangeRateServlet extends HttpServlet {
             return;
         }
 
-        String base = pathInfo.substring(0, 3);
-        String target = pathInfo.substring(3, 6);
+        String baseCode = pathInfo.substring(0, 3);
+        String targetCode = pathInfo.substring(3, 6);
+
 
 
         String rateString = req.getParameter("rate");
@@ -90,7 +94,14 @@ public class ExchangeRateServlet extends HttpServlet {
 
         try {
 
-            ExchangeRatesDto dto = exchangeRatesService.updateExchangeRate(base, target, rate);
+            if (!currencyService.existCode(baseCode)) {
+                if (!currencyService.existCode(targetCode)) {
+                    JsonUtil.sendErrorResponse(resp, "Both currency from a currency pair does not exist", HttpStatusCode.NOT_FOUND.getValue());
+                    return;
+                }
+            }
+
+            ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.updateExchangeRate(baseCode, targetCode, rate));
             JsonUtil.sendJsonResponse(resp, dto, HttpStatusCode.OK.getValue());
 
         } catch (SQLException e) {
@@ -106,5 +117,8 @@ public class ExchangeRateServlet extends HttpServlet {
     private boolean isPatchRequest(HttpServletRequest req) {
         return "PATCH".equals(req.getMethod());
     }
+
+
+
 
 }

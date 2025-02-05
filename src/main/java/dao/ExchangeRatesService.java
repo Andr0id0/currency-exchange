@@ -1,11 +1,7 @@
 package dao;
 
-import convertors.CurrencyConvertor;
-import dto.ExchangeRatesDto;
-import model.Currency;
 import model.ExchangeRates;
 import util.DBUtil;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +34,7 @@ public class ExchangeRatesService {
         return exchangeRates;
     }
 
-    public ExchangeRatesDto getExchangeRateDtoByBaseCurrencyAndTargetCurrency(String baseCode, String targetCode) throws SQLException, NoSuchElementException {
+    public ExchangeRates getExchangeRateByBaseCodeAndTargetCode(String baseCode, String targetCode) throws SQLException, NoSuchElementException {
         final String GET_BY_BASE_AND_TARGET_CURRENCY = """
                SELECT base.id AS base_id, base.code AS base_code, base.full_name AS base_full_name, base.sign AS base_sign,
                target.id AS target_id, target.code AS target_code, target.full_name AS target_full_name, target.sign AS target_sign,
@@ -58,26 +54,12 @@ public class ExchangeRatesService {
             try (ResultSet resultSet = statement.executeQuery()) {
 
                 if (resultSet.next()) {
-                    Currency baseCurrency = new Currency(resultSet.getInt(
-                            "base_id"),
-                            resultSet.getString("base_code"),
-                            resultSet.getString("base_full_name"),
-                            resultSet.getString("base_sign"));
-                    Currency targetCurrency = new Currency(resultSet.getInt(
-                            "target_id"),
-                            resultSet.getString("target_code"),
-                            resultSet.getString("target_full_name"),
-                            resultSet.getString("target_sign"));
-
+                    int baseCurrencyId = resultSet.getInt("base_id");
+                    int targetCurrencyId = resultSet.getInt("target_id");
                     int id = resultSet.getInt("exchange_rate_id");
                     double rate = resultSet.getDouble("rate");
 
-                    ExchangeRatesDto res = new ExchangeRatesDto(
-                            id,
-                            CurrencyConvertor.toDto(baseCurrency),
-                            CurrencyConvertor.toDto(targetCurrency),
-                            rate);
-                    return res;
+                    return new ExchangeRates(id, baseCurrencyId, targetCurrencyId, rate);
                 } else {
                     throw new NoSuchElementException();
                 }
@@ -86,9 +68,9 @@ public class ExchangeRatesService {
         }
     }
 
-    public ExchangeRatesDto addExchangeRateByCurrenciesCods(String baseCode, String targetCode, double rate) throws SQLException {
+    public ExchangeRates addExchangeRateByCurrenciesCods(String baseCode, String targetCode, double rate) throws SQLException {
         final String ADD_EXCHANGE_RATE = """
-                                            INSERT OR IGNORE INTO exchange_rates (base_currency_id, target_currency_id, rate) "
+                                            INSERT OR IGNORE INTO exchange_rates (base_currency_id, target_currency_id, rate)
                                             VALUES (
                                             (SELECT id FROM currencies WHERE code = ?),
                                             (SELECT id FROM currencies WHERE code = ?), ?)
@@ -105,9 +87,9 @@ public class ExchangeRatesService {
             try (ResultSet resultSet = statement.getGeneratedKeys()) {
                 if (resultSet.next()) {
                     int id = resultSet.getInt(1);
-                    Currency base = currencyService.getByCode(baseCode);
-                    Currency target = currencyService.getByCode(targetCode);
-                    return new ExchangeRatesDto(id, CurrencyConvertor.toDto(base), CurrencyConvertor.toDto(target), rate);
+                    int baseId = currencyService.getByCode(baseCode).getId();
+                    int targetId = currencyService.getByCode(targetCode).getId();
+                    return new ExchangeRates(id, baseId, targetId, rate);
                 } else {
                     throw new SQLException();
                 }
@@ -133,7 +115,7 @@ public class ExchangeRatesService {
 
     }
 
-    public ExchangeRatesDto updateExchangeRate(String baseCode, String targetCode, double rate) throws SQLException, NoSuchElementException {
+    public ExchangeRates updateExchangeRate(String baseCode, String targetCode, double rate) throws SQLException, NoSuchElementException {
         final String UPDATE_EXCHANGE_RATE = """ 
                 UPDATE exchange_rates SET rate = ?
                 WHERE base_currency_id = (SELECT id FROM currencies WHERE code = ?)
@@ -152,7 +134,7 @@ public class ExchangeRatesService {
                 throw new NoSuchElementException();
             }
 
-            return getExchangeRateDtoByBaseCurrencyAndTargetCurrency(baseCode, targetCode);
+            return getExchangeRateByBaseCodeAndTargetCode(baseCode, targetCode);
         }
     }
 

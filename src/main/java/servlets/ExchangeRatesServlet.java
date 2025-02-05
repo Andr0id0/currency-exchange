@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 
 @WebServlet("/exchangeRates")
@@ -36,14 +35,8 @@ public class ExchangeRatesServlet extends HttpServlet {
           List<ExchangeRatesDto> dtos = new ArrayList<>();
 
           for (ExchangeRates rates : exchangeRates) {
-              Optional<Currency> baseCurrency = currencyService.getById(rates.getBaseCurrencyId());
-              Optional<Currency> targetCurrency = currencyService.getById(rates.getTargetCurrencyId());
 
-              if (baseCurrency.isEmpty() || targetCurrency.isEmpty()) {
-                  JsonUtil.sendErrorResponse(resp, "Not found base or target currency", HttpStatusCode.NOT_FOUND.getValue());
-                  return;
-              }
-              ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(rates, baseCurrency.get(), targetCurrency.get());
+              ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(rates);
 
               dtos.add(dto);
           }
@@ -88,7 +81,7 @@ public class ExchangeRatesServlet extends HttpServlet {
             }
 
 
-            ExchangeRatesDto dto = exchangeRatesService.addExchangeRateByCurrenciesCods(baseCode, targetCode, rate);
+            ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.addExchangeRateByCurrenciesCods(baseCode, targetCode, rate));
             JsonUtil.sendJsonResponse(resp, dto, HttpStatusCode.CREATED.getValue());
         } catch (SQLException e) {
             JsonUtil.sendErrorResponse(resp, "Internal Server error: " + e.getMessage(), HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
