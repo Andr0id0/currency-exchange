@@ -1,4 +1,4 @@
-package convertors;
+package convertor;
 
 import dto.CurrencyDto;
 import model.Currency;

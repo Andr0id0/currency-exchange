@@ -18,12 +18,11 @@ public class ExchangeDto {
         this.convertedAmount = convertedAmount;
     }
 
-
     public double getAmount() {
         return amount;
     }
 
-    public CurrencyDto getTarget() {
+    public CurrencyDto getTargetCurrency() {
         return targetCurrency;
     }
 
@@ -31,7 +30,7 @@ public class ExchangeDto {
         return convertedAmount;
     }
 
-    public CurrencyDto getBase() {
+    public CurrencyDto getBaseCurrency() {
         return baseCurrency;
     }
 

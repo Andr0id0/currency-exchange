@@ -1,6 +1,6 @@
-package convertors;
+package convertor;
 
-import dao.CurrencyService;
+import service.CurrencyService;
 import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
 import model.Currency;

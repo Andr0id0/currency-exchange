@@ -1,12 +1,11 @@
-package servlets;
+package servlet;
 
-import dao.CurrencyService;
+import response.ErrorResponse;
+import response.Response;
+import service.CurrencyService;
 import dto.CurrencyDto;
 import model.Currency;
-import convertors.CurrencyConvertor;
-import util.HttpStatusCode;
-import util.JsonUtil;
-
+import convertor.CurrencyConvertor;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -16,6 +15,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static util.ServletUtils.isNotValidParams;
 
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
@@ -30,14 +31,13 @@ public class CurrenciesServlet extends HttpServlet {
             List<CurrencyDto> dtos = currencies.stream()
                     .map(CurrencyConvertor::toDto).collect(Collectors.toList());
 
-            JsonUtil.sendJsonResponse(resp, dtos, HttpStatusCode.OK.getValue());
+            Response.sendOk(resp, dtos);
 
         } catch (SQLException e) {
-            JsonUtil.sendErrorResponse(resp, "Internal server error: " +  e.getMessage(), HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
+            ErrorResponse.sendInternalServerError(resp, "Internal server error: " + e.getMessage());
         }
 
     }
-
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -46,31 +46,35 @@ public class CurrenciesServlet extends HttpServlet {
             String fullName = req.getParameter("full_name");
             String sign = req.getParameter("sign");
 
-            if (code == null || fullName == null || sign == null ||
-                code.isEmpty() || fullName.isEmpty() || sign.isEmpty()) {
-
-                JsonUtil.sendErrorResponse(resp, "Required form field is missing", HttpStatusCode.BAD_REQUEST.getValue());
+            if (isNotValidParams(code, fullName, sign, resp)) {
                 return;
             }
 
-            if (currencyService.existCode(code) || currencyService.existFullName(fullName) || currencyService.existSign(sign)) {
-                JsonUtil.sendErrorResponse(resp, "Currency already exist", HttpStatusCode.CONFLICT.getValue());
+            code = code.toUpperCase();
+
+            if (isParamsNotExist(code, fullName, sign, resp)) {
                 return;
             }
 
             Currency newCurrency = new Currency(0, code, fullName, sign);
-
             int id = currencyService.addCurrency(code, fullName, sign);
             newCurrency.setId(id);
-
             CurrencyDto dto = CurrencyConvertor.toDto(newCurrency);
 
-            JsonUtil.sendJsonResponse(resp, dto, HttpStatusCode.CREATED.getValue());
+            Response.sendCreated(resp, dto);
 
-        }  catch (Exception e) {
-            JsonUtil.sendErrorResponse(resp, "Internal server error: " + e.getMessage(), HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
+        }  catch (SQLException e) {
+            ErrorResponse.sendInternalServerError(resp, "Internal server error: " + e.getMessage());
         }
 
+    }
+
+    private boolean isParamsNotExist(String code, String fullName, String sign, HttpServletResponse resp) throws SQLException, IOException {
+        if (currencyService.existCode(code) || currencyService.existFullName(fullName) || currencyService.existSign(sign)) {
+            ErrorResponse.sendConflict(resp, "Currency already exist");
+            return true;
+        }
+        return false;
     }
 
 }

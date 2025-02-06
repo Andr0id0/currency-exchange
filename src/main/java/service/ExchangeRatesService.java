@@ -1,7 +1,10 @@
-package dao;
+package service;
 
+import model.Currency;
 import model.ExchangeRates;
 import util.DBUtil;
+import util.RoundDouble;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +39,8 @@ public class ExchangeRatesService {
 
     public ExchangeRates getExchangeRateByBaseCodeAndTargetCode(String baseCode, String targetCode) throws SQLException, NoSuchElementException {
         final String GET_BY_BASE_AND_TARGET_CURRENCY = """
-               SELECT base.id AS base_id, base.code AS base_code, base.full_name AS base_full_name, base.sign AS base_sign,
-               target.id AS target_id, target.code AS target_code, target.full_name AS target_full_name, target.sign AS target_sign,
+               SELECT base.id AS base_id,
+               target.id AS target_id,
                er.id AS exchange_rate_id, er.rate
                FROM exchange_rates er
                INNER JOIN currencies base ON er.base_currency_id = base.id
@@ -89,7 +92,7 @@ public class ExchangeRatesService {
                     int id = resultSet.getInt(1);
                     int baseId = currencyService.getByCode(baseCode).getId();
                     int targetId = currencyService.getByCode(targetCode).getId();
-                    return new ExchangeRates(id, baseId, targetId, rate);
+                    return new ExchangeRates(id, baseId, targetId, RoundDouble.roundTo6DecimalPlace(rate));
                 } else {
                     throw new SQLException();
                 }
@@ -136,6 +139,69 @@ public class ExchangeRatesService {
 
             return getExchangeRateByBaseCodeAndTargetCode(baseCode, targetCode);
         }
+    }
+
+
+    public ExchangeRates getExchangeRate(String baseCode, String targetCode) throws SQLException, NoSuchElementException {
+
+        if (isExchangeRateExist(baseCode, targetCode)) {
+            return getDefaultExchangeRates(baseCode, targetCode);
+        }
+        if (isReversedExchangeRateExist(baseCode, targetCode)) {
+            return getReversedExchangeRates(targetCode, baseCode);
+        }
+
+        String usd = "USD";
+        if (isExchangeRateExist(usd, baseCode) && isExchangeRateExist(usd, targetCode)) {
+
+            ExchangeRates usdBase = getDefaultExchangeRates(usd, baseCode);
+            ExchangeRates usdTarget = getDefaultExchangeRates(usd, targetCode);
+
+            double newExchangeRate = RoundDouble.roundTo6DecimalPlace(usdTarget.getRate() / usdBase.getRate());
+
+            return new ExchangeRates(0,
+                    usdBase.getTargetCurrencyId(),
+                    usdTarget.getTargetCurrencyId(),
+                    newExchangeRate);
+
+        }
+
+        else throw new NoSuchElementException();
+    }
+
+    private boolean isExchangeRateExist(String baseCode, String targetCode) throws SQLException {
+        return existExchangeRateByBaseCurrencyAndTargetCurrency(baseCode, targetCode);
+    }
+
+    private boolean isReversedExchangeRateExist(String baseCode, String targetCode) throws SQLException {
+        return existExchangeRateByBaseCurrencyAndTargetCurrency(targetCode, baseCode);
+    }
+
+
+    private ExchangeRates getDefaultExchangeRates(String baseCode, String targetCode) throws SQLException {
+        return getExchangeRatesByCods(baseCode, targetCode, false);
+    }
+
+    private ExchangeRates getReversedExchangeRates(String baseCode, String targetCode) throws SQLException {
+        return getExchangeRatesByCods(baseCode, targetCode, true);
+    }
+
+    private ExchangeRates getExchangeRatesByCods(String baseCode, String targetCode, boolean isReverse) throws SQLException {
+        ExchangeRates exchangeRate = getExchangeRateByBaseCodeAndTargetCode(baseCode, targetCode);
+        Currency base = currencyService.getByCode(baseCode);
+        Currency target = currencyService.getByCode(targetCode);
+        double newExchangeRate = RoundDouble.roundTo6DecimalPlace((isReverse) ? (1 / exchangeRate.getRate()) : (exchangeRate.getRate()));
+        int baseId = base.getId();
+        int targetId = target.getId();
+        if (isReverse) {
+            int temp = targetId;
+            targetId = baseId;
+            baseId = temp;
+        }
+        return new ExchangeRates(exchangeRate.getId(),
+                baseId,
+                targetId,
+                newExchangeRate);
     }
 
 }
