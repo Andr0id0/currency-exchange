@@ -64,11 +64,11 @@ public class ServletUtils {
     }
 
     public static boolean isCodsNotExist(String baseCode, String targetCode, HttpServletResponse resp) throws SQLException, IOException {
-        if (!currencyService.existCode(baseCode)) {
-            if (!currencyService.existCode(targetCode)) {
-                ErrorResponse.sendNotFound(resp, "Both currency from a currency pair does not exist");
-                return true;
-            }
+        if (!currencyService.existCode(baseCode) && !currencyService.existCode(targetCode)) {
+            ErrorResponse.sendNotFound(resp, "Both currency from a currency pair does not exist");
+            return true;
+        }
+        if (!currencyService.existCode(baseCode) || !currencyService.existCode(targetCode)) {
             ErrorResponse.sendNotFound(resp, "Currency does not exist");
             return true;
         }

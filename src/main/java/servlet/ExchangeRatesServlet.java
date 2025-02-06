@@ -18,9 +18,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import static util.ServletUtils.isNotValidParams;
-import static util.ServletUtils.isCodsNotExist;
-import static util.ServletUtils.isCodsUsed;
+
+import static util.ServletUtils.*;
 
 
 @WebServlet("/exchangeRates")
@@ -72,12 +71,8 @@ public class ExchangeRatesServlet extends HttpServlet {
 
             ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.addExchangeRateByCurrenciesCods(baseCode, targetCode, rate));
             Response.sendCreated(resp, dto);
-        } catch (SQLException e) {
-            ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
-        } catch (NoSuchElementException e) {
-            ErrorResponse.sendNotFound(resp, "Exchange rate not found");
-        } catch (NumberFormatException e) {
-            ErrorResponse.sendBadRequest(resp, "Rate is not number");
+        }  catch (SQLException | NoSuchElementException | NumberFormatException e) {
+            handleException(resp, e, "Exchange rate", "Rate");
         }
     }
 

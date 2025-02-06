@@ -16,12 +16,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
-import static util.ServletUtils.extractCurrencyCodes;
-import static util.ServletUtils.isNotValidPathInfo;
-import static util.ServletUtils.isNotValidParam;
-import static util.ServletUtils.isCodsNotExist;
-import static util.ServletUtils.isNotValidPathParam;
-import static util.ServletUtils.isNotValidTwoPathParams;
+import static util.ServletUtils.*;
 
 
 @WebServlet("/exchangeRate/*")
@@ -37,7 +32,7 @@ public class ExchangeRateServlet extends HttpServlet {
         if (isNotValidPathInfo(resp, pathInfo)) {
             return;
         }
-        if (isNotValidPathParam(resp, pathInfo)) {
+        if (isNotValidTwoPathParams(resp, pathInfo)) {
             return;
         }
 
@@ -94,12 +89,8 @@ public class ExchangeRateServlet extends HttpServlet {
             ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.updateExchangeRate(baseCode, targetCode, rate));
             Response.sendOk(resp, dto);
 
-        } catch (SQLException e) {
-            ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
-        } catch (NoSuchElementException e) {
-            ErrorResponse.sendNotFound(resp, "Exchange rate not found");
-        } catch (NumberFormatException e) {
-            ErrorResponse.sendBadRequest(resp, "Rate is not number");
+        } catch (SQLException | NoSuchElementException | NumberFormatException e) {
+            handleException(resp, e, "Exchange rate", "Rate");
         }
     }
 

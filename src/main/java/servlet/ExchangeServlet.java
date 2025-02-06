@@ -1,11 +1,8 @@
 package servlet;
 
 import model.ExchangeDto;
-import response.ErrorResponse;
 import response.Response;
 import service.ExchangeDtoService;
-import util.ServletUtils;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -46,13 +43,8 @@ public class ExchangeServlet extends HttpServlet {
 
             Response.sendOk(resp, dto);
 
-        }
-        catch (SQLException e) {
-            ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
-        } catch (NoSuchElementException e) {
-            ErrorResponse.sendNotFound(resp, "Exchange rate not found");
-        } catch (NumberFormatException e) {
-            ErrorResponse.sendBadRequest(resp, "Amount is not number");
+        } catch (SQLException | NoSuchElementException | NumberFormatException e) {
+            handleException(resp, e, "Exchange rate", "Amount");
         }
     }
 
