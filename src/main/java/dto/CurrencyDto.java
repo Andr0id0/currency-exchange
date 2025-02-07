@@ -3,13 +3,13 @@ package dto;
 public class CurrencyDto {
     int id;
     String code;
-    String fullName;
+    String name;
     String sign;
 
-    public CurrencyDto(int id, String code, String fullName, String sign) {
+    public CurrencyDto(int id, String code, String name, String sign) {
         this.id = id;
         this.code = code;
-        this.fullName = fullName;
+        this.name = name;
         this.sign = sign;
     }
 
@@ -25,8 +25,8 @@ public class CurrencyDto {
         return sign;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getName() {
+        return name;
     }
 
 }
