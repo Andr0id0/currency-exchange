@@ -4,10 +4,15 @@ import response.ErrorResponse;
 import service.CurrencyService;
 import service.ExchangeRatesService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 
 public class ServletUtils {
@@ -15,30 +20,40 @@ public class ServletUtils {
     private static final ExchangeRatesService exchangeRatesService = new ExchangeRatesService();
     private static final CurrencyService currencyService = new CurrencyService();
 
-    public static boolean isNotValidPathInfo(HttpServletResponse resp, String pathInfo) throws IOException {
+
+    public static String validateParam(HttpServletRequest req, HttpServletResponse resp, String param) throws IOException, IllegalArgumentException {
+        String parameter = req.getParameter(param);
+        if (parameter == null || parameter.isEmpty() ) {
+            ErrorResponse.sendBadRequest(resp, "Required form field is missing");
+            throw new IllegalArgumentException("Missing required parameter: " + param);
+        }
+        return parameter;
+    }
+
+    public static String validatePathCode(HttpServletResponse resp, String pathInfo) throws IOException, IllegalArgumentException {
         if (pathInfo == null || pathInfo.equals("/")) {
             ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
-            return true;
+            throw new IllegalArgumentException("Missing required parameter");
         }
-
-        return false;
-    }
-    public static boolean isNotValidPathParam(HttpServletResponse resp, String pathInfo) throws IOException {
         pathInfo = pathInfo.substring(1);
         if (pathInfo.length() != 3) {
             ErrorResponse.sendBadRequest(resp, "Use format: XXX");
-            return true;
+            throw new IllegalArgumentException("Missing required parameter");
         }
-        return false;
+        return pathInfo;
     }
 
-    public static boolean isNotValidTwoPathParams(HttpServletResponse resp, String pathInfo) throws IOException {
+    public static String validateTwoPathCods(HttpServletResponse resp, String pathInfo) throws IOException, IllegalArgumentException {
+        if (pathInfo == null || pathInfo.equals("/")) {
+            ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
+            throw new IllegalArgumentException("Missing required parameter");
+        }
         pathInfo = pathInfo.substring(1);
         if (pathInfo.length() != 6) {
             ErrorResponse.sendBadRequest(resp, "Use format: XXXYYY");
-            return true;
+            throw new IllegalArgumentException("Missing required parameter");
         }
-        return false;
+        return pathInfo;
     }
 
     public static String[] extractCurrencyCodes(String pathInfo) {
@@ -47,40 +62,23 @@ public class ServletUtils {
         return new String[]{baseCode, targetCode};
     }
 
-    public static boolean isNotValidParams(String baseCode, String targetCode, String digit, HttpServletResponse resp) throws IOException {
-        if (baseCode == null || targetCode == null || digit == null ||
-                baseCode.isEmpty() || targetCode.isEmpty() || digit.isEmpty()) {
-            ErrorResponse.sendBadRequest(resp, "Required form field is missing");
-            return true;
-        }
-        return false;
-    }
-    public static boolean isNotValidParam(String string, HttpServletResponse resp) throws IOException {
-        if (string == null || string.isEmpty()) {
-            ErrorResponse.sendBadRequest(resp, "Required form field is missing");
-            return true;
-        }
-        return false;
-    }
 
-    public static boolean isCodsNotExist(String baseCode, String targetCode, HttpServletResponse resp) throws SQLException, IOException {
+    public static void isCodsNotExist(String baseCode, String targetCode, HttpServletResponse resp) throws SQLException, IOException {
         if (!currencyService.existCode(baseCode) && !currencyService.existCode(targetCode)) {
             ErrorResponse.sendNotFound(resp, "Both currency from a currency pair does not exist");
-            return true;
+            throw new NoSuchElementException();
         }
         if (!currencyService.existCode(baseCode) || !currencyService.existCode(targetCode)) {
             ErrorResponse.sendNotFound(resp, "Currency does not exist");
-            return true;
+            throw new NoSuchElementException();
         }
-        return false;
     }
 
-    public static boolean isCodsUsed(String baseCode, String targetCode, HttpServletResponse resp) throws IOException, SQLException {
+    public static void isCodsUsed(String baseCode, String targetCode, HttpServletResponse resp) throws IOException, SQLException {
         if (exchangeRatesService.existExchangeRateByBaseCurrencyAndTargetCurrency(baseCode, targetCode)) {
             ErrorResponse.sendConflict(resp, "Exchange rate already exist");
-            return true;
+            throw new NoSuchElementException();
         }
-        return false;
     }
 
      public static void handleException(HttpServletResponse resp, Exception e, String noSuchElement, String noCastNumber) throws IOException {
@@ -92,5 +90,17 @@ public class ServletUtils {
             ErrorResponse.sendBadRequest(resp, noCastNumber + " is not number");
         }
     }
+
+    public static String getRequestBodyParam(HttpServletRequest req, String param) throws IOException, IllegalArgumentException {
+        String body = req.getReader().lines().collect(Collectors.joining());
+
+        return Arrays.stream(body.split("&"))
+                .map(s -> s.split("="))
+                .filter(arr -> arr.length == 2 && arr[0].equals(param))
+                .map(arr -> URLDecoder.decode(arr[1], StandardCharsets.UTF_8))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing required parameter: " + param));
+    }
+
 
 }

@@ -20,6 +20,6 @@ public class JsonUtil {
         resp.setContentType("application/json; charset=UTF-8");
         resp.setCharacterEncoding("UTF-8");
         resp.setStatus(errorStatus);
-        mapper.writeValue(resp.getWriter(), Map.of( "massage", message));
+        mapper.writeValue(resp.getWriter(), Map.of( "message", message));
     }
 }

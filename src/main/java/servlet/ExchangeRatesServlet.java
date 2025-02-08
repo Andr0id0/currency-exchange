@@ -7,13 +7,14 @@ import service.CurrencyService;
 import service.ExchangeRatesService;
 import dto.ExchangeRatesDto;
 import model.ExchangeRates;
-import util.RoundDouble;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,28 +52,23 @@ public class ExchangeRatesServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String baseCode = req.getParameter("base_code");
-        String targetCode = req.getParameter("target_code");
-        String rateString = req.getParameter("rate");
-        if (isNotValidParams(baseCode, targetCode, rateString, resp)) {
-            return;
-        }
+        String baseCode = validateParam(req, resp,"baseCurrencyCode");
+        String targetCode = validateParam(req, resp,"targetCurrencyCode");
+        String rateString = validateParam(req, resp,"rate");
 
         baseCode = baseCode.toUpperCase();
         targetCode = targetCode.toUpperCase();
 
         try {
-            double rate = RoundDouble.roundTo6DecimalPlace(Double.parseDouble(rateString));
-
-            if (isCodsNotExist(baseCode, targetCode, resp))
-                return;
-            if (isCodsUsed(baseCode, targetCode, resp))
-                return;
+            BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
+            isCodsUsed(baseCode, targetCode, resp);
 
             ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.addExchangeRateByCurrenciesCods(baseCode, targetCode, rate));
             Response.sendCreated(resp, dto);
         }  catch (SQLException | NoSuchElementException | NumberFormatException e) {
             handleException(resp, e, "Exchange rate", "Rate");
+        } catch (IllegalArgumentException e) {
+            ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
         }
     }
 

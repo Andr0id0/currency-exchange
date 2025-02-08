@@ -3,8 +3,8 @@ package service;
 import model.Currency;
 import model.ExchangeRates;
 import util.DBUtil;
-import util.RoundDouble;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ExchangeRatesService {
                         resultSet.getInt("id"),
                         resultSet.getInt("base_currency_id"),
                         resultSet.getInt("target_currency_id"),
-                        resultSet.getDouble("rate")
+                        resultSet.getBigDecimal("rate")
                 ));
             }
 
@@ -60,7 +60,7 @@ public class ExchangeRatesService {
                     int baseCurrencyId = resultSet.getInt("base_id");
                     int targetCurrencyId = resultSet.getInt("target_id");
                     int id = resultSet.getInt("exchange_rate_id");
-                    double rate = resultSet.getDouble("rate");
+                    BigDecimal rate = resultSet.getBigDecimal("rate");
 
                     return new ExchangeRates(id, baseCurrencyId, targetCurrencyId, rate);
                 } else {
@@ -71,7 +71,7 @@ public class ExchangeRatesService {
         }
     }
 
-    public ExchangeRates addExchangeRateByCurrenciesCods(String baseCode, String targetCode, double rate) throws SQLException {
+    public ExchangeRates addExchangeRateByCurrenciesCods(String baseCode, String targetCode, BigDecimal rate) throws SQLException {
         final String ADD_EXCHANGE_RATE = """
                                             INSERT OR IGNORE INTO exchange_rates (base_currency_id, target_currency_id, rate)
                                             VALUES (
@@ -84,7 +84,7 @@ public class ExchangeRatesService {
 
             statement.setString(1, baseCode);
             statement.setString(2, targetCode);
-            statement.setDouble(3, rate);
+            statement.setBigDecimal(3, rate);
             statement.executeUpdate();
 
             try (ResultSet resultSet = statement.getGeneratedKeys()) {
@@ -92,7 +92,7 @@ public class ExchangeRatesService {
                     int id = resultSet.getInt(1);
                     int baseId = currencyService.getByCode(baseCode).getId();
                     int targetId = currencyService.getByCode(targetCode).getId();
-                    return new ExchangeRates(id, baseId, targetId, RoundDouble.roundTo6DecimalPlace(rate));
+                    return new ExchangeRates(id, baseId, targetId, rate);
                 } else {
                     throw new SQLException();
                 }
@@ -118,7 +118,7 @@ public class ExchangeRatesService {
 
     }
 
-    public ExchangeRates updateExchangeRate(String baseCode, String targetCode, double rate) throws SQLException, NoSuchElementException {
+    public ExchangeRates updateExchangeRate(String baseCode, String targetCode, BigDecimal rate) throws SQLException, NoSuchElementException {
         final String UPDATE_EXCHANGE_RATE = """ 
                 UPDATE exchange_rates SET rate = ?
                 WHERE base_currency_id = (SELECT id FROM currencies WHERE code = ?)
@@ -128,7 +128,7 @@ public class ExchangeRatesService {
         try (Connection connection = DBUtil.getConnection();
             PreparedStatement statement = connection.prepareStatement(UPDATE_EXCHANGE_RATE)) {
 
-            statement.setDouble(1, rate);
+            statement.setBigDecimal(1, rate);
             statement.setString(2, baseCode);
             statement.setString(3, targetCode);
 
@@ -157,7 +157,7 @@ public class ExchangeRatesService {
             ExchangeRates usdBase = getDefaultExchangeRates(usd, baseCode);
             ExchangeRates usdTarget = getDefaultExchangeRates(usd, targetCode);
 
-            double newExchangeRate = RoundDouble.roundTo6DecimalPlace(usdTarget.getRate() / usdBase.getRate());
+            BigDecimal newExchangeRate = usdTarget.getRate().divide(usdBase.getRate(), 6, RoundingMode.HALF_UP);
 
             return new ExchangeRates(0,
                     usdBase.getTargetCurrencyId(),
@@ -190,7 +190,7 @@ public class ExchangeRatesService {
         ExchangeRates exchangeRate = getExchangeRateByBaseCodeAndTargetCode(baseCode, targetCode);
         Currency base = currencyService.getByCode(baseCode);
         Currency target = currencyService.getByCode(targetCode);
-        double newExchangeRate = RoundDouble.roundTo6DecimalPlace((isReverse) ? (1 / exchangeRate.getRate()) : (exchangeRate.getRate()));
+        BigDecimal newExchangeRate = (isReverse) ? (BigDecimal.ONE.divide(exchangeRate.getRate(), 6, RoundingMode.HALF_UP)) : (exchangeRate.getRate());
         int baseId = base.getId();
         int targetId = target.getId();
         if (isReverse) {

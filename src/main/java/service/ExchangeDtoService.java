@@ -4,8 +4,8 @@ import convertor.CurrencyConvertor;
 import model.Currency;
 import model.ExchangeDto;
 import model.ExchangeRates;
-import util.RoundDouble;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
@@ -14,7 +14,7 @@ public class ExchangeDtoService {
     ExchangeRatesService exchangeRatesService = new ExchangeRatesService();
     CurrencyService currencyService = new CurrencyService();
 
-    public ExchangeDto getExchangeDto(String baseCode, String targetCode, double amount) throws SQLException, NoSuchElementException {
+    public ExchangeDto getExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException, NoSuchElementException {
 
         if (isExchangeRateExist(baseCode, targetCode)) {
             return getDefaultExchangeDto(baseCode, targetCode, amount);
@@ -29,8 +29,8 @@ public class ExchangeDtoService {
             ExchangeDto usdBase = getDefaultExchangeDto(usd, baseCode, amount);
             ExchangeDto usdTarget = getDefaultExchangeDto(usd, targetCode, amount);
 
-            double exchangeRate = RoundDouble.roundTo6DecimalPlace(usdTarget.getRate() / usdBase.getRate());
-            double convertedAmount = RoundDouble.roundTo2decimalPlace(exchangeRate * amount);
+            BigDecimal exchangeRate = usdTarget.getRate().divide(usdBase.getRate(), 6, RoundingMode.HALF_UP);
+            BigDecimal convertedAmount = exchangeRate.multiply(amount).setScale(2, RoundingMode.HALF_UP);
 
             return new ExchangeDto(
                     usdBase.getTargetCurrency(),
@@ -51,20 +51,20 @@ public class ExchangeDtoService {
     }
 
 
-    private ExchangeDto getDefaultExchangeDto(String baseCode, String targetCode, double amount) throws SQLException {
+    private ExchangeDto getDefaultExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
         return getExchangeDtoByCods(baseCode, targetCode, amount, false);
     }
 
-    private ExchangeDto getReversedExchangeDto(String baseCode, String targetCode, double amount) throws SQLException {
+    private ExchangeDto getReversedExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
         return getExchangeDtoByCods(baseCode, targetCode, amount, true);
     }
 
-    private ExchangeDto getExchangeDtoByCods(String baseCode, String targetCode, double amount, boolean isReverse) throws SQLException {
+    private ExchangeDto getExchangeDtoByCods(String baseCode, String targetCode, BigDecimal amount, boolean isReverse) throws SQLException {
         ExchangeRates exchangeRate = exchangeRatesService.getExchangeRateByBaseCodeAndTargetCode(baseCode, targetCode);
         Currency base = currencyService.getByCode(baseCode);
         Currency target = currencyService.getByCode(targetCode);
-        double newRate = RoundDouble.roundTo6DecimalPlace(isReverse ? (1 / exchangeRate.getRate()) : exchangeRate.getRate());
-        double convertedAmount = RoundDouble.roundTo2decimalPlace(newRate * amount);
+        BigDecimal newRate = (isReverse) ? (BigDecimal.ONE.divide(exchangeRate.getRate(), 6, RoundingMode.HALF_UP)) : exchangeRate.getRate();
+        BigDecimal convertedAmount = newRate.multiply(amount).setScale(2, RoundingMode.HALF_UP);
         Currency baseCurrency = base;
         Currency targetCurrency = target;
         if (isReverse) {

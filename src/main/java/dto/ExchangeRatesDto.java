@@ -1,20 +1,22 @@
 package dto;
 
+import java.math.BigDecimal;
+
 public class ExchangeRatesDto {
     int id;
     CurrencyDto baseCurrency;
     CurrencyDto targetCurrency;
-    double rate;
+    BigDecimal rate;
 
 
-    public ExchangeRatesDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, double rate) {
+    public ExchangeRatesDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, BigDecimal rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;
         this.rate = rate;
     }
 
-    public CurrencyDto getBaseCurrencyId() {
+    public CurrencyDto getBaseCurrency() {
         return baseCurrency;
     }
 
@@ -22,11 +24,11 @@ public class ExchangeRatesDto {
         return id;
     }
 
-    public CurrencyDto getTargetCurrencyId() {
+    public CurrencyDto getTargetCurrency() {
         return targetCurrency;
     }
 
-    public double getRate() {
+    public BigDecimal getRate() {
         return rate;
     }
 

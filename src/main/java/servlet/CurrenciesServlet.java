@@ -16,7 +16,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static util.ServletUtils.isNotValidParams;
+
+import static util.ServletUtils.validateParam;
 
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
@@ -42,19 +43,14 @@ public class CurrenciesServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            String code = req.getParameter("code");
-            String fullName = req.getParameter("full_name");
-            String sign = req.getParameter("sign");
-
-            if (isNotValidParams(code, fullName, sign, resp)) {
-                return;
-            }
+            String code = validateParam(req, resp, "code");
+            String fullName = validateParam(req, resp, "name");
+            String sign = validateParam(req, resp, "sign");
 
             code = code.toUpperCase();
 
-            if (isParamsNotExist(code, fullName, sign, resp)) {
+            if (isParamsNotExist(code, fullName, sign, resp))
                 return;
-            }
 
             Currency newCurrency = new Currency(0, code, fullName, sign);
             int id = currencyService.addCurrency(code, fullName, sign);
@@ -65,6 +61,8 @@ public class CurrenciesServlet extends HttpServlet {
 
         }  catch (SQLException e) {
             ErrorResponse.sendInternalServerError(resp, "Internal server error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
         }
 
     }

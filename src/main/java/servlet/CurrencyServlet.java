@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
-import static util.ServletUtils.isNotValidPathParam;
-import static util.ServletUtils.isNotValidPathInfo;
+import static util.ServletUtils.validatePathCode;
+
 
 @WebServlet("/currency/*")
 public class CurrencyServlet extends HttpServlet {
@@ -24,18 +24,10 @@ public class CurrencyServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-        String pathInfo = req.getPathInfo();
-        if (isNotValidPathInfo(resp, pathInfo)) {
-            return;
-        }
-        if (isNotValidPathParam(resp, pathInfo)) {
-            return;
-        }
-
-        String code = pathInfo.substring(1).toUpperCase();
-
         try {
+            String pathInfo = validatePathCode(resp, req.getPathInfo());
+
+            String code = pathInfo.toUpperCase();
 
             Currency currency = currencyService.getByCode(code);
 
@@ -46,6 +38,8 @@ public class CurrencyServlet extends HttpServlet {
             ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
         } catch (NoSuchElementException e) {
             ErrorResponse.sendNotFound(resp, "Currency not found");
+        } catch (IllegalArgumentException e) {
+            ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
         }
 
 
