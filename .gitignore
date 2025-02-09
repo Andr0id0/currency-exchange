@@ -1,5 +1,5 @@
 .idea
-currency-exchanger.db
+schema.sql
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

@@ -5,6 +5,7 @@ import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
 import model.Currency;
 import model.ExchangeRates;
+import repository.CurrencyRepository;
 
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
@@ -13,7 +14,7 @@ import java.util.Optional;
 
 public class ExchangeRatesConvertorService {
 
-    private static final CurrencyService currencyService = new CurrencyService();
+    private static final CurrencyRepository CURRENCY_REPOSITORY = new CurrencyRepository();
 
 
     public static ExchangeRatesDto toDto(ExchangeRates exchangeRates) throws SQLException, NoSuchElementException {
@@ -25,7 +26,7 @@ public class ExchangeRatesConvertorService {
     }
 
     private static CurrencyDto getCurrencyDtoById(int id) throws SQLException, NoSuchElementException {
-        Optional<Currency> currency = currencyService.getById(id);
+        Optional<Currency> currency = CURRENCY_REPOSITORY.getById(id);
         if (currency.isEmpty()) {
             throw new NoSuchElementException();
         }

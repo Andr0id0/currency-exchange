@@ -2,7 +2,7 @@ package servlet;
 
 import response.ErrorResponse;
 import response.Response;
-import service.CurrencyService;
+import repository.CurrencyRepository;
 import dto.CurrencyDto;
 import model.Currency;
 import convertor.CurrencyConvertor;
@@ -12,22 +12,23 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
-import static util.ServletUtils.validateParam;
+import static util.ServletValidationUtils.validateParam;
 
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
 
-    private final CurrencyService currencyService = new CurrencyService();
+    private final CurrencyRepository currencyRepository = new CurrencyRepository();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            List<Currency> currencies = currencyService.getAllCurrencies();
+            List<Currency> currencies = currencyRepository.getAll();
 
             List<CurrencyDto> dtos = currencies.stream()
                     .map(CurrencyConvertor::toDto).collect(Collectors.toList());
@@ -47,32 +48,25 @@ public class CurrenciesServlet extends HttpServlet {
             String fullName = validateParam(req, resp, "name");
             String sign = validateParam(req, resp, "sign");
 
-            code = code.toUpperCase();
-
-            if (isParamsNotExist(code, fullName, sign, resp))
+            if (code.length() != 3) {
+                ErrorResponse.sendBadRequest(resp, "Code must be XXX");
                 return;
-
+            }
+            code = code.toUpperCase();
             Currency newCurrency = new Currency(0, code, fullName, sign);
-            int id = currencyService.addCurrency(code, fullName, sign);
-            newCurrency.setId(id);
+            newCurrency = currencyRepository.add(newCurrency);
             CurrencyDto dto = CurrencyConvertor.toDto(newCurrency);
 
             Response.sendCreated(resp, dto);
 
-        }  catch (SQLException e) {
+        } catch (SQLDataException e) {
+            ErrorResponse.sendConflict(resp, e.getMessage());
+        } catch (SQLException e) {
             ErrorResponse.sendInternalServerError(resp, "Internal server error: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
+        }  catch (IllegalArgumentException e) {
             ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
         }
 
-    }
-
-    private boolean isParamsNotExist(String code, String fullName, String sign, HttpServletResponse resp) throws SQLException, IOException {
-        if (currencyService.existCode(code) || currencyService.existFullName(fullName) || currencyService.existSign(sign)) {
-            ErrorResponse.sendConflict(resp, "Currency already exist");
-            return true;
-        }
-        return false;
     }
 
 }

@@ -1,4 +1,4 @@
-package util;
+package db;
 
 import org.sqlite.SQLiteDataSource;
 import javax.sql.DataSource;
@@ -8,21 +8,21 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class DbFactory {
+public class DbConnectionFactory {
 
-    private static DbFactory instance = null;
-    private DbFactory() {
+    private static DbConnectionFactory instance = null;
+    private DbConnectionFactory() {
     }
 
-    public static DbFactory getInstance() {
+    public static DbConnectionFactory getInstance() {
         if(instance==null){
-            instance = new DbFactory();
+            instance = new DbConnectionFactory();
         }
         return instance;
     }
 
     private DataSource getDataSource() {
-        URL resource = DbFactory.class.getClassLoader().getResource("currency-exchange.db");
+        URL resource = DbConnectionFactory.class.getClassLoader().getResource("currency-exchange.db");
         String path = null;
         if (resource != null) {
             try {
@@ -38,8 +38,8 @@ public class DbFactory {
 
 
     public static Connection getConnection() throws SQLException {
-        DbFactory dbFactory = DbFactory.getInstance();
-        DataSource dataSource = dbFactory.getDataSource();
+        DbConnectionFactory dbConnectionFactory = DbConnectionFactory.getInstance();
+        DataSource dataSource = dbConnectionFactory.getDataSource();
         return dataSource.getConnection();
     }
 }

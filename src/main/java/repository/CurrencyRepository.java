@@ -1,7 +1,7 @@
-package service;
+package repository;
 
 import model.Currency;
-import util.DbFactory;
+import db.DbConnectionFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -9,14 +9,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-public class CurrencyService {
+public class CurrencyRepository implements Repository<Currency> {
 
-
-    public List<Currency> getAllCurrencies() throws SQLException {
+    @Override
+    public List<Currency> getAll() throws SQLException {
         final String SELECT_ALL_SQL = "SELECT * FROM currencies";
         List<Currency> currencies = new ArrayList<>();
 
-        try (Connection connection = DbFactory.getConnection();
+        try (Connection connection = DbConnectionFactory.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(SELECT_ALL_SQL)) {
 
@@ -33,33 +33,40 @@ public class CurrencyService {
         return currencies;
     }
 
-    public int addCurrency(String code, String fullName, String sign) throws SQLException {
-        final String ADD_CURRENCY = "INSERT OR IGNORE INTO currencies (code, full_name, sign) VALUES (?, ?, ?)";
+    public Currency add(Currency currency) throws SQLException, SQLDataException {
+        final String ADD_CURRENCY = "INSERT INTO currencies (code, full_name, sign) VALUES (?, ?, ?)";
 
-        try (Connection connection = DbFactory.getConnection();
+        try (Connection connection = DbConnectionFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(ADD_CURRENCY)) {
 
-            statement.setString(1, code);
-            statement.setString(2, fullName);
-            statement.setString(3, sign);
+            statement.setString(1, currency.getCode());
+            statement.setString(2, currency.getFullName());
+            statement.setString(3, currency.getSign());
             statement.executeUpdate();
 
             try (ResultSet resultSet = statement.getGeneratedKeys()) {
                 if (resultSet.next()) {
-                    return resultSet.getInt(1);
+                    currency.setId(resultSet.getInt(1));
+                    return currency;
                 } else {
                     throw new SQLException();
                 }
 
             }
-
+        } catch (SQLException e) {
+            if (e.getMessage().contains("UNIQUE constraint failed")) {
+                throw new SQLDataException("Currency with this params already exists.", e);
+            } else {
+                throw e;
+            }
         }
+
     }
 
     public Optional<Currency> getById(int id) throws SQLException {
         final String GET_BY_ID = "SELECT * FROM currencies WHERE id = ?";
 
-        try (Connection connection = DbFactory.getConnection();
+        try (Connection connection = DbConnectionFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_ID)) {
 
             statement.setInt(1, id);
@@ -80,7 +87,7 @@ public class CurrencyService {
     public Currency getByCode(String code) throws SQLException, NoSuchElementException {
         final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
 
-        try (Connection connection = DbFactory.getConnection();
+        try (Connection connection = DbConnectionFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
 
             statement.setString(1,code);
@@ -98,48 +105,5 @@ public class CurrencyService {
             }
         }
     }
-
-    public boolean existCode(String code) throws SQLException {
-        final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
-
-        try (Connection connection = DbFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
-
-            statement.setString(1,code);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
-
-        }
-
-    }
-
-    public boolean existFullName(String fullName) throws SQLException {
-        final String GET_BY_FULL_NAME = "SELECT * FROM currencies WHERE full_name = ?";
-
-        try (Connection connection = DbFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(GET_BY_FULL_NAME)) {
-
-            statement.setString(1, fullName);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
-
-        }
-
-    }
-
-    public boolean existSign(String sign) throws SQLException {
-        final String GET_BY_FULL_SIGN = "SELECT * FROM currencies WHERE sign = ?";
-
-        try (Connection connection = DbFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(GET_BY_FULL_SIGN)) {
-
-            statement.setString(1, sign);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
-
-        }
-
-    }
-
 
 }

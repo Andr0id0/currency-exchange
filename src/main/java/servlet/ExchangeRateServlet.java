@@ -1,9 +1,10 @@
 package servlet;
 
-import convertor.ExchangeRatesConvertor;
+import service.ExchangeRateService;
+import service.ExchangeRatesConvertorService;
 import response.ErrorResponse;
 import response.Response;
-import service.ExchangeRatesService;
+import repository.ExchangeRatesRepository;
 import dto.ExchangeRatesDto;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,16 +14,21 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
-import static util.ServletUtils.*;
+import static util.ServletValidationUtils.*;
 
 
 @WebServlet("/exchangeRate/*")
 public class ExchangeRateServlet extends HttpServlet {
 
-    ExchangeRatesService exchangeRatesService = new ExchangeRatesService();
+    ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
+    ExchangeRateService exchangeRateService = new ExchangeRateService();
 
 
     @Override
@@ -34,7 +40,7 @@ public class ExchangeRateServlet extends HttpServlet {
             String baseCode = codes[0];
             String targetCode = codes[1];
 
-            ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.getExchangeRate(baseCode, targetCode));
+            ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(exchangeRateService.getExchangeRate(baseCode, targetCode));
             Response.sendOk(resp, dto);
 
         } catch (SQLException e) {
@@ -66,18 +72,31 @@ public class ExchangeRateServlet extends HttpServlet {
 
             BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
 
-            isCodsNotExist(baseCode, targetCode, resp);
-
-            ExchangeRatesDto dto = ExchangeRatesConvertor.toDto(exchangeRatesService.updateExchangeRate(baseCode, targetCode, rate));
+            ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.update(baseCode, targetCode, rate));
             Response.sendOk(resp, dto);
 
-        } catch (SQLException | NoSuchElementException | NumberFormatException e) {
-            handleException(resp, e, "Exchange rate", "Rate");
+        } catch (SQLException e) {
+            ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            ErrorResponse.sendBadRequest(resp,"Rate is not number");
+        } catch (NoSuchElementException e) {
+            ErrorResponse.sendNotFound(resp, "Exchange rate not found");
         } catch (IllegalArgumentException e) {
             ErrorResponse.sendBadRequest(resp, "Currency pathInfo is missing");
         }
     }
 
+
+    private String getRequestBodyParam(HttpServletRequest req, String param) throws IOException, IllegalArgumentException {
+        String body = req.getReader().lines().collect(Collectors.joining());
+
+        return Arrays.stream(body.split("&"))
+                .map(s -> s.split("="))
+                .filter(arr -> arr.length == 2 && arr[0].equals(param))
+                .map(arr -> URLDecoder.decode(arr[1], StandardCharsets.UTF_8))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing required parameter: " + param));
+    }
 
 
 
