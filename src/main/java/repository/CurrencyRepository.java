@@ -1,7 +1,7 @@
 package service;
 
 import model.Currency;
-import util.DBUtil;
+import util.DbFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public class CurrencyService {
         final String SELECT_ALL_SQL = "SELECT * FROM currencies";
         List<Currency> currencies = new ArrayList<>();
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(SELECT_ALL_SQL)) {
 
@@ -36,7 +36,7 @@ public class CurrencyService {
     public int addCurrency(String code, String fullName, String sign) throws SQLException {
         final String ADD_CURRENCY = "INSERT OR IGNORE INTO currencies (code, full_name, sign) VALUES (?, ?, ?)";
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(ADD_CURRENCY)) {
 
             statement.setString(1, code);
@@ -59,7 +59,7 @@ public class CurrencyService {
     public Optional<Currency> getById(int id) throws SQLException {
         final String GET_BY_ID = "SELECT * FROM currencies WHERE id = ?";
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_ID)) {
 
             statement.setInt(1, id);
@@ -80,8 +80,8 @@ public class CurrencyService {
     public Currency getByCode(String code) throws SQLException, NoSuchElementException {
         final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
 
-        try (Connection connection = DBUtil.getConnection();
-            PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
+        try (Connection connection = DbFactory.getConnection();
+             PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
 
             statement.setString(1,code);
             ResultSet resultSet = statement.executeQuery();
@@ -102,7 +102,7 @@ public class CurrencyService {
     public boolean existCode(String code) throws SQLException {
         final String GET_BY_CODE = "SELECT * FROM currencies WHERE code = ?";
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_CODE)) {
 
             statement.setString(1,code);
@@ -116,7 +116,7 @@ public class CurrencyService {
     public boolean existFullName(String fullName) throws SQLException {
         final String GET_BY_FULL_NAME = "SELECT * FROM currencies WHERE full_name = ?";
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_FULL_NAME)) {
 
             statement.setString(1, fullName);
@@ -130,7 +130,7 @@ public class CurrencyService {
     public boolean existSign(String sign) throws SQLException {
         final String GET_BY_FULL_SIGN = "SELECT * FROM currencies WHERE sign = ?";
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_FULL_SIGN)) {
 
             statement.setString(1, sign);

@@ -2,7 +2,7 @@ package service;
 
 import model.Currency;
 import model.ExchangeRates;
-import util.DBUtil;
+import util.DbFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.*;
@@ -20,7 +20,7 @@ public class ExchangeRatesService {
 
         List<ExchangeRates> exchangeRates = new ArrayList<>();
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(GET_ALL_EXCHANGE_RATES)) {
 
@@ -48,7 +48,7 @@ public class ExchangeRatesService {
                WHERE base.code = ? AND target.code = ?
                 """;
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_BASE_AND_TARGET_CURRENCY);) {
 
             statement.setString(1, baseCode);
@@ -79,7 +79,7 @@ public class ExchangeRatesService {
                                             (SELECT id FROM currencies WHERE code = ?), ?)
                                             """;
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(ADD_EXCHANGE_RATE)) {
 
             statement.setString(1, baseCode);
@@ -106,7 +106,7 @@ public class ExchangeRatesService {
                 (SELECT id FROM currencies WHERE code = ?) AND target_currency_id = (SELECT id FROM currencies WHERE code = ?)
                 """;
 
-        try (Connection connection = DBUtil.getConnection();
+        try (Connection connection = DbFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(GET_BY_BASE_CODE_AND_TARGET_CODE)) {
 
             statement.setString(1, baseCode);
@@ -125,8 +125,8 @@ public class ExchangeRatesService {
                 AND target_currency_id = (SELECT id FROM currencies WHERE code = ?)
                 """;
 
-        try (Connection connection = DBUtil.getConnection();
-            PreparedStatement statement = connection.prepareStatement(UPDATE_EXCHANGE_RATE)) {
+        try (Connection connection = DbFactory.getConnection();
+             PreparedStatement statement = connection.prepareStatement(UPDATE_EXCHANGE_RATE)) {
 
             statement.setBigDecimal(1, rate);
             statement.setString(2, baseCode);

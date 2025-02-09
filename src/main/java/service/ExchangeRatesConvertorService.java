@@ -1,6 +1,6 @@
-package convertor;
+package service;
 
-import service.CurrencyService;
+import convertor.CurrencyConvertor;
 import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
 import model.Currency;
@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 
-public class ExchangeRatesConvertor {
+public class ExchangeRatesConvertorService {
 
     private static final CurrencyService currencyService = new CurrencyService();
 

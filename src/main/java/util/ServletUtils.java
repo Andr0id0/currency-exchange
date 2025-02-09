@@ -1,8 +1,8 @@
 package util;
 
 import response.ErrorResponse;
-import service.CurrencyService;
-import service.ExchangeRatesService;
+import repository.CurrencyRepository;
+import repository.ExchangeRatesRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 
 public class ServletUtils {
 
-    private static final ExchangeRatesService exchangeRatesService = new ExchangeRatesService();
-    private static final CurrencyService currencyService = new CurrencyService();
+    private static final ExchangeRatesRepository EXCHANGE_RATES_REPOSITORY = new ExchangeRatesRepository();
+    private static final CurrencyRepository CURRENCY_REPOSITORY = new CurrencyRepository();
 
 
     public static String validateParam(HttpServletRequest req, HttpServletResponse resp, String param) throws IOException, IllegalArgumentException {
@@ -64,18 +64,18 @@ public class ServletUtils {
 
 
     public static void isCodsNotExist(String baseCode, String targetCode, HttpServletResponse resp) throws SQLException, IOException {
-        if (!currencyService.existCode(baseCode) && !currencyService.existCode(targetCode)) {
+        if (!CURRENCY_REPOSITORY.existCode(baseCode) && !CURRENCY_REPOSITORY.existCode(targetCode)) {
             ErrorResponse.sendNotFound(resp, "Both currency from a currency pair does not exist");
             throw new NoSuchElementException();
         }
-        if (!currencyService.existCode(baseCode) || !currencyService.existCode(targetCode)) {
+        if (!CURRENCY_REPOSITORY.existCode(baseCode) || !CURRENCY_REPOSITORY.existCode(targetCode)) {
             ErrorResponse.sendNotFound(resp, "Currency does not exist");
             throw new NoSuchElementException();
         }
     }
 
     public static void isCodsUsed(String baseCode, String targetCode, HttpServletResponse resp) throws IOException, SQLException {
-        if (exchangeRatesService.existExchangeRateByBaseCurrencyAndTargetCurrency(baseCode, targetCode)) {
+        if (EXCHANGE_RATES_REPOSITORY.existExchangeRateByBaseCurrencyAndTargetCurrency(baseCode, targetCode)) {
             ErrorResponse.sendConflict(resp, "Exchange rate already exist");
             throw new NoSuchElementException();
         }
