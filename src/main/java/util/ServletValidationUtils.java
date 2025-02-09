@@ -2,22 +2,16 @@ package util;
 
 import response.ErrorResponse;
 import repository.CurrencyRepository;
-import repository.ExchangeRatesRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 
-public class ServletUtils {
+public class ServletValidationUtils {
 
-    private static final ExchangeRatesRepository EXCHANGE_RATES_REPOSITORY = new ExchangeRatesRepository();
     private static final CurrencyRepository CURRENCY_REPOSITORY = new CurrencyRepository();
 
 
@@ -63,24 +57,6 @@ public class ServletUtils {
     }
 
 
-    public static void isCodsNotExist(String baseCode, String targetCode, HttpServletResponse resp) throws SQLException, IOException {
-        if (!CURRENCY_REPOSITORY.existCode(baseCode) && !CURRENCY_REPOSITORY.existCode(targetCode)) {
-            ErrorResponse.sendNotFound(resp, "Both currency from a currency pair does not exist");
-            throw new NoSuchElementException();
-        }
-        if (!CURRENCY_REPOSITORY.existCode(baseCode) || !CURRENCY_REPOSITORY.existCode(targetCode)) {
-            ErrorResponse.sendNotFound(resp, "Currency does not exist");
-            throw new NoSuchElementException();
-        }
-    }
-
-    public static void isCodsUsed(String baseCode, String targetCode, HttpServletResponse resp) throws IOException, SQLException {
-        if (EXCHANGE_RATES_REPOSITORY.existExchangeRateByBaseCurrencyAndTargetCurrency(baseCode, targetCode)) {
-            ErrorResponse.sendConflict(resp, "Exchange rate already exist");
-            throw new NoSuchElementException();
-        }
-    }
-
      public static void handleException(HttpServletResponse resp, Exception e, String noSuchElement, String noCastNumber) throws IOException {
         if (e instanceof SQLException) {
             ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
@@ -91,16 +67,6 @@ public class ServletUtils {
         }
     }
 
-    public static String getRequestBodyParam(HttpServletRequest req, String param) throws IOException, IllegalArgumentException {
-        String body = req.getReader().lines().collect(Collectors.joining());
-
-        return Arrays.stream(body.split("&"))
-                .map(s -> s.split("="))
-                .filter(arr -> arr.length == 2 && arr[0].equals(param))
-                .map(arr -> URLDecoder.decode(arr[1], StandardCharsets.UTF_8))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Missing required parameter: " + param));
-    }
 
 
 }
