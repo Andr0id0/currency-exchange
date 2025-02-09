@@ -56,16 +56,4 @@ public class ServletValidationUtils {
         return new String[]{baseCode, targetCode};
     }
 
-     public static void handleException(HttpServletResponse resp, Exception e, String noSuchElement, String noCastNumber) throws IOException {
-        if (e instanceof SQLException) {
-            ErrorResponse.sendInternalServerError(resp, "Internal Server error: " + e.getMessage());
-        } else if (e instanceof NoSuchElementException) {
-            ErrorResponse.sendNotFound(resp,  noSuchElement + " not found");
-        } else if (e instanceof NumberFormatException) {
-            ErrorResponse.sendBadRequest(resp, noCastNumber + " is not number");
-        }
-    }
-
-
-
 }
