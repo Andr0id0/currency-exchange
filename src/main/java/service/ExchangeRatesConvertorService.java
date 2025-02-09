@@ -2,7 +2,7 @@ package service;
 
 import convertor.CurrencyConvertor;
 import dto.CurrencyDto;
-import dto.ExchangeRatesDto;
+import dto.ExchangeRatesResultDto;
 import model.Currency;
 import model.ExchangeRates;
 import repository.CurrencyRepository;
@@ -17,8 +17,8 @@ public class ExchangeRatesConvertorService {
     private static final CurrencyRepository CURRENCY_REPOSITORY = new CurrencyRepository();
 
 
-    public static ExchangeRatesDto toDto(ExchangeRates exchangeRates) throws SQLException, NoSuchElementException {
-        return new ExchangeRatesDto(
+    public static ExchangeRatesResultDto toDto(ExchangeRates exchangeRates) throws SQLException, NoSuchElementException {
+        return new ExchangeRatesResultDto(
                 exchangeRates.getId(),
                 getCurrencyDtoById(exchangeRates.getBaseCurrencyId()),
                 getCurrencyDtoById(exchangeRates.getTargetCurrencyId()),

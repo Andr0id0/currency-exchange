@@ -1,10 +1,11 @@
 package servlet;
 
+import dto.ExchangeRatesRequestDto;
 import service.ExchangeRatesConvertorService;
 import response.ErrorResponse;
 import response.Response;
 import repository.ExchangeRatesRepository;
-import dto.ExchangeRatesDto;
+import dto.ExchangeRatesResultDto;
 import model.ExchangeRates;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,10 +35,10 @@ public class ExchangeRatesServlet extends HttpServlet {
 
             List<ExchangeRates> exchangeRates = exchangeRatesRepository.getAll();
 
-            List<ExchangeRatesDto> dtos = new ArrayList<>();
+            List<ExchangeRatesResultDto> dtos = new ArrayList<>();
 
             for (ExchangeRates rates : exchangeRates) {
-                ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(rates);
+                ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(rates);
                 dtos.add(dto);
             }
 
@@ -61,7 +62,9 @@ public class ExchangeRatesServlet extends HttpServlet {
         try {
             BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
 
-            ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.add(baseCode, targetCode, rate));
+            ExchangeRatesRequestDto requestDto = new ExchangeRatesRequestDto(baseCode, targetCode, rate);
+            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.add(requestDto));
+
             Response.sendCreated(resp, dto);
         } catch (SQLDataException e) {
             ErrorResponse.sendConflict(resp, e.getMessage());

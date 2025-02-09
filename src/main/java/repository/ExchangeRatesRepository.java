@@ -1,5 +1,6 @@
 package repository;
 
+import dto.ExchangeRatesRequestDto;
 import model.ExchangeRates;
 import db.DbConnectionFactory;
 import java.math.BigDecimal;
@@ -70,7 +71,10 @@ public class ExchangeRatesRepository implements Repository<ExchangeRates>{
         }
     }
 
-    public ExchangeRates add(String baseCode, String targetCode, BigDecimal rate) throws SQLException, SQLDataException {
+    public ExchangeRates add(ExchangeRatesRequestDto requestDto) throws SQLException, SQLDataException {
+        String baseCode = requestDto.getBaseCurrencyCode();
+        String targetCode = requestDto.getTagetCurrencyCode();
+        BigDecimal rate = requestDto.getRate();
         final String ADD_EXCHANGE_RATE = """
                                             INSERT INTO exchange_rates (base_currency_id, target_currency_id, rate)
                                             VALUES (

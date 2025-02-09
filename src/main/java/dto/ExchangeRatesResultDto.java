@@ -2,14 +2,14 @@ package dto;
 
 import java.math.BigDecimal;
 
-public class ExchangeRatesDto {
+public class ExchangeRatesResultDto {
     int id;
     CurrencyDto baseCurrency;
     CurrencyDto targetCurrency;
     BigDecimal rate;
 
 
-    public ExchangeRatesDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, BigDecimal rate) {
+    public ExchangeRatesResultDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, BigDecimal rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;

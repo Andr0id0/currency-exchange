@@ -1,8 +1,10 @@
 package service;
 
 import convertor.CurrencyConvertor;
+import dto.ExchangeRatesRequestDto;
+import dto.ExchangeRequestDto;
 import model.Currency;
-import model.ExchangeDto;
+import dto.ExchangeResultDto;
 import model.ExchangeRates;
 import repository.CurrencyRepository;
 import repository.ExchangeRatesRepository;
@@ -18,7 +20,9 @@ public class ExchangeRateService {
     ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
     CurrencyRepository currencyRepository = new CurrencyRepository();
 
-    public ExchangeRates getExchangeRate(String baseCode, String targetCode) throws SQLException, NoSuchElementException {
+    public ExchangeRates getExchangeRate(ExchangeRatesRequestDto requestDto) throws SQLException, NoSuchElementException {
+        String baseCode = requestDto.getBaseCurrencyCode();
+        String targetCode = requestDto.getBaseCurrencyCode();
 
         if (isExchangeRateExist(baseCode, targetCode))
             return defaultExchangeRate(baseCode, targetCode);
@@ -33,7 +37,10 @@ public class ExchangeRateService {
         else throw new NoSuchElementException();
     }
 
-    public ExchangeDto getExchange(String baseCode, String targetCode, BigDecimal amount) throws SQLException, NoSuchElementException {
+    public ExchangeResultDto getExchange(ExchangeRequestDto requestDto) throws SQLException, NoSuchElementException {
+        String baseCode = requestDto.getBaseCurrencyCode();
+        String targetCode = requestDto.getTagetCurrencyCode();
+        BigDecimal amount = requestDto.getAmount();
 
         if (isExchangeRateExist(baseCode, targetCode))
             return defaultExchangeDto(baseCode, targetCode, amount);
@@ -78,22 +85,22 @@ public class ExchangeRateService {
                 usdTarget.getTargetCurrencyId(),
                 newExchangeRate);
     }
-    private ExchangeDto defaultExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
+    private ExchangeResultDto defaultExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
         return convert(baseCode, targetCode, amount, false);
     }
 
-    private ExchangeDto reversedExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
+    private ExchangeResultDto reversedExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
         return convert(baseCode, targetCode, amount, true);
     }
 
-    private ExchangeDto crossExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
-        ExchangeDto usdBase = defaultExchangeDto(CROSS_CODE, baseCode, amount);
-        ExchangeDto usdTarget = defaultExchangeDto(CROSS_CODE, targetCode, amount);
+    private ExchangeResultDto crossExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
+        ExchangeResultDto usdBase = defaultExchangeDto(CROSS_CODE, baseCode, amount);
+        ExchangeResultDto usdTarget = defaultExchangeDto(CROSS_CODE, targetCode, amount);
 
         BigDecimal exchangeRate = usdTarget.getRate().divide(usdBase.getRate(), 6, RoundingMode.HALF_UP);
         BigDecimal convertedAmount = exchangeRate.multiply(amount).setScale(2, RoundingMode.HALF_UP);
 
-        return new ExchangeDto(
+        return new ExchangeResultDto(
                 usdBase.getTargetCurrency(),
                 usdTarget.getTargetCurrency(),
                 exchangeRate, amount, convertedAmount);
@@ -117,7 +124,7 @@ public class ExchangeRateService {
                 newExchangeRate);
     }
 
-    private ExchangeDto convert(String baseCode, String targetCode, BigDecimal amount, boolean isReverse) throws SQLException {
+    private ExchangeResultDto convert(String baseCode, String targetCode, BigDecimal amount, boolean isReverse) throws SQLException {
         ExchangeRates exchangeRate = exchangeRatesRepository.getByCods(baseCode, targetCode);
         Currency base = currencyRepository.getByCode(baseCode);
         Currency target = currencyRepository.getByCode(targetCode);
@@ -130,7 +137,7 @@ public class ExchangeRateService {
             targetCurrency = baseCurrency;
             baseCurrency = temp;
         }
-        return new ExchangeDto(
+        return new ExchangeResultDto(
                 CurrencyConvertor.toDto(baseCurrency),
                 CurrencyConvertor.toDto(targetCurrency),
                 newRate, amount, convertedAmount);

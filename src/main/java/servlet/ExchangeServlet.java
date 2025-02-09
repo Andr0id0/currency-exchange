@@ -1,6 +1,7 @@
 package servlet;
 
-import model.ExchangeDto;
+import dto.ExchangeRequestDto;
+import dto.ExchangeResultDto;
 import response.ErrorResponse;
 import response.Response;
 import service.ExchangeRateService;
@@ -36,7 +37,8 @@ public class ExchangeServlet extends HttpServlet {
 
             BigDecimal amount = new BigDecimal(amountSting).setScale(2, RoundingMode.HALF_UP);
 
-            ExchangeDto dto = exchangeRateService.getExchange(baseCode, targetCode, amount);
+            ExchangeRequestDto requestDto = new ExchangeRequestDto(baseCode, targetCode, amount);
+            ExchangeResultDto dto = exchangeRateService.getExchange(requestDto);
 
             Response.sendOk(resp, dto);
 

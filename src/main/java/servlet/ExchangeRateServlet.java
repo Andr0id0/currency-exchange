@@ -1,11 +1,12 @@
 package servlet;
 
+import dto.ExchangeRatesRequestDto;
 import service.ExchangeRateService;
 import service.ExchangeRatesConvertorService;
 import response.ErrorResponse;
 import response.Response;
 import repository.ExchangeRatesRepository;
-import dto.ExchangeRatesDto;
+import dto.ExchangeRatesResultDto;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -40,7 +41,8 @@ public class ExchangeRateServlet extends HttpServlet {
             String baseCode = codes[0];
             String targetCode = codes[1];
 
-            ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(exchangeRateService.getExchangeRate(baseCode, targetCode));
+            ExchangeRatesRequestDto requestDto = new ExchangeRatesRequestDto(baseCode, targetCode, new BigDecimal(0));
+            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRateService.getExchangeRate(requestDto));
             Response.sendOk(resp, dto);
 
         } catch (SQLException e) {
@@ -72,7 +74,7 @@ public class ExchangeRateServlet extends HttpServlet {
 
             BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
 
-            ExchangeRatesDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.update(baseCode, targetCode, rate));
+            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.update(baseCode, targetCode, rate));
             Response.sendOk(resp, dto);
 
         } catch (SQLException e) {
