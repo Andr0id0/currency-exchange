@@ -30,7 +30,7 @@ public class ExchangeRateServlet extends HttpServlet {
 
     ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
     ExchangeRateService exchangeRateService = new ExchangeRateService();
-
+    ExchangeRatesConvertorService convertorService = new ExchangeRatesConvertorService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -42,7 +42,7 @@ public class ExchangeRateServlet extends HttpServlet {
             String targetCode = codes[1];
 
             ExchangeRatesRequestDto requestDto = new ExchangeRatesRequestDto(baseCode, targetCode, new BigDecimal(0));
-            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRateService.getExchangeRate(requestDto));
+            ExchangeRatesResultDto dto = convertorService.toDto(exchangeRateService.getExchangeRate(requestDto));
             Response.sendOk(resp, dto);
 
         } catch (SQLException e) {
@@ -74,7 +74,7 @@ public class ExchangeRateServlet extends HttpServlet {
 
             BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
 
-            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.update(baseCode, targetCode, rate));
+            ExchangeRatesResultDto dto = convertorService.toDto(exchangeRatesRepository.update(baseCode, targetCode, rate));
             Response.sendOk(resp, dto);
 
         } catch (SQLException e) {

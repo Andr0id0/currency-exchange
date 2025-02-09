@@ -28,6 +28,7 @@ import static util.ServletValidationUtils.*;
 public class ExchangeRatesServlet extends HttpServlet {
 
     ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
+    ExchangeRatesConvertorService convertorService = new ExchangeRatesConvertorService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -38,7 +39,7 @@ public class ExchangeRatesServlet extends HttpServlet {
             List<ExchangeRatesResultDto> dtos = new ArrayList<>();
 
             for (ExchangeRates rates : exchangeRates) {
-                ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(rates);
+                ExchangeRatesResultDto dto = convertorService.toDto(rates);
                 dtos.add(dto);
             }
 
@@ -63,7 +64,7 @@ public class ExchangeRatesServlet extends HttpServlet {
             BigDecimal rate = new BigDecimal(rateString).setScale(6, RoundingMode.HALF_UP);
 
             ExchangeRatesRequestDto requestDto = new ExchangeRatesRequestDto(baseCode, targetCode, rate);
-            ExchangeRatesResultDto dto = ExchangeRatesConvertorService.toDto(exchangeRatesRepository.add(requestDto));
+            ExchangeRatesResultDto dto = convertorService.toDto(exchangeRatesRepository.add(requestDto));
 
             Response.sendCreated(resp, dto);
         } catch (SQLDataException e) {

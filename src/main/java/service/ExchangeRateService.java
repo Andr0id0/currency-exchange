@@ -17,8 +17,8 @@ public class ExchangeRateService {
 
     private static final String CROSS_CODE = "USD";
 
-    ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
-    CurrencyRepository currencyRepository = new CurrencyRepository();
+    private final ExchangeRatesRepository exchangeRatesRepository = new ExchangeRatesRepository();
+    private final CurrencyRepository currencyRepository = new CurrencyRepository();
 
     public ExchangeRates getExchangeRate(ExchangeRatesRequestDto requestDto) throws SQLException, NoSuchElementException {
         String baseCode = requestDto.getBaseCurrencyCode();
