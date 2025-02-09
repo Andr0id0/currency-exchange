@@ -79,11 +79,11 @@ public class ExchangeRateService {
                 newExchangeRate);
     }
     private ExchangeDto defaultExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
-        return exchangeDto(baseCode, targetCode, amount, false);
+        return convert(baseCode, targetCode, amount, false);
     }
 
     private ExchangeDto reversedExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
-        return exchangeDto(baseCode, targetCode, amount, true);
+        return convert(baseCode, targetCode, amount, true);
     }
 
     private ExchangeDto crossExchangeDto(String baseCode, String targetCode, BigDecimal amount) throws SQLException {
@@ -117,7 +117,7 @@ public class ExchangeRateService {
                 newExchangeRate);
     }
 
-    private ExchangeDto exchangeDto(String baseCode, String targetCode, BigDecimal amount, boolean isReverse) throws SQLException {
+    private ExchangeDto convert(String baseCode, String targetCode, BigDecimal amount, boolean isReverse) throws SQLException {
         ExchangeRates exchangeRate = exchangeRatesRepository.getByCods(baseCode, targetCode);
         Currency base = currencyRepository.getByCode(baseCode);
         Currency target = currencyRepository.getByCode(targetCode);
